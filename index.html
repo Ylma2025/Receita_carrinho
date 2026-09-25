@@ -1,0 +1,756 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dashboard - Ylma Cake's</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', sans-serif; }
+  body { background: #fdf6f0; color: #4a2c2a; padding: 20px; }
+
+  header { text-align: center; margin-bottom: 25px; }
+  h1 { color: #b85c5c; font-size: 28px; }
+  header p { color: #8a6a68; font-size: 14px; margin-top: 5px; }
+
+  .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 15px; margin-bottom: 25px; }
+  .card { background: #fff; padding: 18px; border-radius: 12px; box-shadow: 0 4px 12px rgba(184,92,92,0.1); border-left: 5px solid #b85c5c; transition: transform 0.2s; }
+  .card:hover { transform: translateY(-3px); }
+  .card h3 { font-size: 12px; color: #8a6a68; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px; }
+  .card p { font-size: 24px; font-weight: bold; color: #b85c5c; }
+
+  .form-box { background: #fff; padding: 20px; border-radius: 12px; box-shadow: 0 4px 12px rgba(184,92,92,0.1); margin-bottom: 20px; }
+  .form-box h2 { color: #b85c5c; font-size: 16px; margin-bottom: 15px; }
+  .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; align-items: end; }
+
+  .field { display: flex; flex-direction: column; }
+  .field label { font-size: 12px; color: #8a6a68; margin-bottom: 5px; font-weight: 600; }
+
+  input, select { padding: 10px; border: 1px solid #e0c8c4; border-radius: 8px; font-size: 14px; background: #fff; width: 100%; }
+  input:focus, select:focus { outline: 2px solid #b85c5c; border-color: transparent; }
+  input.erro { border-color: #d9534f; background: #ffeaea; }
+
+  button { padding: 10px 16px; border: none; border-radius: 8px; font-size: 14px; font-weight: bold; cursor: pointer; transition: 0.2s; }
+  .btn-primary { background: #b85c5c; color: #fff; }
+  .btn-primary:hover { background: #9c4646; }
+  .btn-success { background: #4caf50; color: #fff; }
+  .btn-success:hover { background: #3d8b40; }
+  .btn-blue { background: #1976d2; color: #fff; }
+  .btn-blue:hover { background: #125aa0; }
+  .btn-ghost { background: #f0e0dd; color: #8a6a68; }
+  .btn-ghost:hover { background: #e0c8c4; }
+  .btn-danger { background: #d9534f; color: #fff; }
+  .btn-danger:hover { background: #c9302c; }
+
+  .toolbar { background: #fff; padding: 15px; border-radius: 12px; box-shadow: 0 4px 12px rgba(184,92,92,0.1); margin-bottom: 20px; display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+  .toolbar input, .toolbar select { flex: 1; min-width: 140px; width: auto; }
+
+  .report-bar { background: #fff; padding: 15px; border-radius: 12px; box-shadow: 0 4px 12px rgba(184,92,92,0.1); margin-bottom: 20px; display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+  .report-bar h3 { color: #b85c5c; font-size: 14px; margin-right: 10px; white-space: nowrap; }
+  .report-bar input, .report-bar select { flex: 1; min-width: 130px; width: auto; max-width: 220px; }
+
+  .table-wrap { background: #fff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 12px rgba(184,92,92,0.1); overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; min-width: 700px; }
+  th { background: #b85c5c; color: #fff; padding: 12px; text-align: left; font-size: 13px; white-space: nowrap; }
+  td { padding: 10px 12px; border-bottom: 1px solid #f0e0dd; font-size: 14px; }
+  tr:hover td { background: #fdf6f0; }
+
+  td input, td select { width: 100%; padding: 6px 8px; border: 1px solid #e0c8c4; border-radius: 6px; font-size: 13px; background: #fafafa; }
+  td input:focus { background: #fff; outline: 2px solid #b85c5c; }
+  td.total-cell { font-weight: bold; color: #b85c5c; white-space: nowrap; }
+
+  .actions button { padding: 5px 8px; font-size: 12px; margin-right: 4px; }
+
+  .empty { text-align: center; padding: 40px; color: #8a6a68; font-style: italic; }
+
+  .status { text-align: center; padding: 12px; font-size: 14px; border-radius: 8px; margin-top: 15px; display: none; font-weight: 600; }
+  .status.ok { background: #e8f5e9; color: #2e7d32; display: block; }
+  .status.info { background: #e3f2fd; color: #1565c0; display: block; }
+  .status.erro { background: #ffebee; color: #c62828; display: block; }
+
+  /* MODAL DE RELATÓRIO */
+  .modal-overlay {
+    display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5);
+    z-index: 1000; justify-content: center; align-items: flex-start;
+    padding: 20px; overflow-y: auto;
+  }
+  .modal-overlay.aberto { display: flex; }
+  .modal {
+    background: #fff; border-radius: 12px; width: 100%; max-width: 900px;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.2); margin: auto;
+  }
+  .modal-header {
+    background: #b85c5c; color: #fff; padding: 18px 20px;
+    border-radius: 12px 12px 0 0; display: flex; justify-content: space-between; align-items: center;
+  }
+  .modal-header h2 { font-size: 18px; }
+  .modal-header .btn-fechar {
+    background: transparent; color: #fff; font-size: 22px; padding: 0 8px; border: none; cursor: pointer;
+  }
+  .modal-actions {
+    padding: 15px 20px; display: flex; gap: 10px; justify-content: flex-end;
+    border-bottom: 1px solid #f0e0dd; flex-wrap: wrap;
+  }
+  .modal-body { padding: 25px; max-height: 70vh; overflow-y: auto; }
+
+  /* RELATÓRIO */
+  .relatorio { color: #333; font-size: 14px; }
+  .relatorio .cabecalho { text-align: center; margin-bottom: 25px; border-bottom: 2px solid #b85c5c; padding-bottom: 15px; }
+  .relatorio .cabecalho h1 { color: #b85c5c; font-size: 24px; margin-bottom: 5px; }
+  .relatorio .cabecalho p { color: #666; font-size: 13px; }
+  .relatorio .cabecalho .titulo-rel { font-size: 18px; font-weight: bold; color: #4a2c2a; margin-top: 10px; }
+
+  .relatorio .resumo {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 10px; margin-bottom: 25px;
+  }
+  .relatorio .resumo-item {
+    background: #fdf6f0; padding: 12px; border-radius: 8px; border-left: 4px solid #b85c5c;
+  }
+  .relatorio .resumo-item strong { display: block; font-size: 11px; color: #8a6a68; text-transform: uppercase; margin-bottom: 4px; }
+  .relatorio .resumo-item span { font-size: 18px; font-weight: bold; color: #b85c5c; }
+
+  .relatorio .grupo { margin-bottom: 25px; page-break-inside: avoid; }
+  .relatorio .grupo-titulo {
+    background: #f0e0dd; color: #4a2c2a; padding: 10px 15px;
+    font-weight: bold; font-size: 15px; border-radius: 6px; margin-bottom: 10px;
+    display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 5px;
+  }
+  .relatorio .grupo-titulo .subtotal { color: #b85c5c; font-size: 14px; }
+
+  .relatorio table { width: 100%; border-collapse: collapse; min-width: auto; margin-bottom: 8px; }
+  .relatorio th { background: #b85c5c; color: #fff; padding: 8px 10px; text-align: left; font-size: 12px; }
+  .relatorio td { padding: 8px 10px; border-bottom: 1px solid #f0e0dd; font-size: 13px; }
+  .relatorio tr:last-child td { border-bottom: none; }
+  .relatorio .total-final {
+    background: #b85c5c; color: #fff; padding: 15px; border-radius: 8px;
+    text-align: center; font-size: 18px; font-weight: bold; margin-top: 20px;
+  }
+  .relatorio .sem-dados { text-align: center; padding: 40px; color: #8a6a68; font-style: italic; }
+
+  @media print {
+    body * { visibility: hidden; }
+    #areaImpressao, #areaImpressao * { visibility: visible; }
+    #areaImpressao { position: absolute; left: 0; top: 0; width: 100%; padding: 15px; }
+    .modal-header, .modal-actions { display: none !important; }
+    .modal { box-shadow: none; border-radius: 0; max-width: 100%; }
+    .modal-body { max-height: none; overflow: visible; padding: 0; }
+    .relatorio .grupo { page-break-inside: avoid; }
+    @page { margin: 1cm; }
+  }
+
+  @media (max-width: 700px) {
+    body { padding: 10px; }
+    h1 { font-size: 22px; }
+    .card p { font-size: 20px; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>🍰 Ylma Cake's</h1>
+  <p>Controle de Receitas do Carrinho</p>
+</header>
+
+<div class="cards">
+  <div class="card"><h3>💰 Receita Total</h3><p id="totalGeral">R$ 0,00</p></div>
+  <div class="card"><h3>🧾 Vendas</h3><p id="totalVendas">0</p></div>
+  <div class="card"><h3>📊 Ticket Médio</h3><p id="ticketMedio">R$ 0,00</p></div>
+  <div class="card"><h3>📅 Vendas Hoje</h3><p id="vendasHoje">R$ 0,00</p></div>
+</div>
+
+<div class="form-box">
+  <h2>➕ Nova Entrada</h2>
+  <div class="form-grid">
+    <div class="field"><label>Data</label><input type="date" id="data"></div>
+    <div class="field"><label>Produto</label><input type="text" id="produto" placeholder="Ex: Bolo de chocolate"></div>
+    <div class="field"><label>Quantidade</label><input type="number" id="quantidade" min="1" value="1"></div>
+    <div class="field"><label>Valor Unitário (R$)</label><input type="number" id="valor" step="0.01" min="0" placeholder="0,00"></div>
+    <div class="field"><label>&nbsp;</label><button type="button" class="btn-primary" id="btnAdicionar">➕ Adicionar</button></div>
+  </div>
+</div>
+
+<div class="toolbar">
+  <input type="text" id="busca" placeholder="🔍 Buscar produto...">
+  <select id="filtroMes"><option value="">Todos os meses</option></select>
+  <button class="btn-success" id="btnProcessar">⚙️ Processar Cálculos</button>
+  <button class="btn-ghost" id="btnBackup">📥 Backup</button>
+  <button class="btn-ghost" id="btnImportar">📤 Importar</button>
+  <input type="file" id="importFile" accept=".json" style="display:none">
+  <button class="btn-ghost" id="btnCSV">📊 CSV</button>
+  <button class="btn-danger" id="btnLimpar">🗑️ Limpar</button>
+</div>
+
+<div class="report-bar">
+  <h3>🖨️ Relatórios:</h3>
+  <select id="tipoRelatorio">
+    <option value="diario">📅 Diário (agrupado por dia)</option>
+    <option value="mensal">📆 Mensal (agrupado por mês)</option>
+  </select>
+  <select id="periodoRelatorio">
+    <option value="">Todos os períodos</option>
+  </select>
+  <button class="btn-blue" id="btnGerarRelatorio">👁️ Visualizar Relatório</button>
+</div>
+
+<div class="table-wrap">
+  <table>
+    <thead>
+      <tr>
+        <th>Data</th><th>Produto</th><th>Qtd</th><th>Valor Unit.</th><th>Total</th><th>Ações</th>
+      </tr>
+    </thead>
+    <tbody id="tabela"></tbody>
+  </table>
+</div>
+
+<div class="status" id="status"></div>
+
+<div class="modal-overlay" id="modalRelatorio">
+  <div class="modal">
+    <div class="modal-header">
+      <h2 id="tituloModal">Relatório</h2>
+      <button class="btn-fechar" onclick="fecharModal()">✕</button>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-ghost" onclick="fecharModal()">Fechar</button>
+      <button class="btn-primary" onclick="imprimirRelatorio()">🖨️ Imprimir / Salvar PDF</button>
+    </div>
+    <div class="modal-body">
+      <div id="areaImpressao">
+        <div class="relatorio" id="conteudoRelatorio"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  // ============================================
+  // ESTADO
+  // ============================================
+  let vendas = [];
+  try {
+    vendas = JSON.parse(localStorage.getItem('ylmaVendas') || '[]');
+    if (!Array.isArray(vendas)) vendas = [];
+  } catch (e) { vendas = []; }
+
+  const fmt = v => (Number(v) || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+  const fmtDate = d => d ? new Date(d + 'T00:00').toLocaleDateString('pt-BR') : '';
+
+  // ============================================
+  // SALVAR
+  // ============================================
+  function salvar() {
+    localStorage.setItem('ylmaVendas', JSON.stringify(vendas));
+    atualizarFiltroMeses();
+    render();
+    mostrarStatus('Dados salvos. Clique em "⚙️ Processar Cálculos" para atualizar o resumo.', 'info');
+  }
+
+  // ============================================
+  // RENDER
+  // ============================================
+  function render() {
+    const tbody = document.getElementById('tabela');
+    const busca = document.getElementById('busca').value.toLowerCase();
+    const mesFiltro = document.getElementById('filtroMes').value;
+
+    let lista = vendas
+      .map((v, i) => ({ ...v, _index: i }))
+      .filter(v => {
+        const matchBusca = !busca || (v.produto || '').toLowerCase().includes(busca);
+        const matchMes = !mesFiltro || (v.data && v.data.substring(0, 7) === mesFiltro);
+        return matchBusca && matchMes;
+      })
+      .sort((a, b) => new Date(b.data) - new Date(a.data));
+
+    if (lista.length === 0) {
+      tbody.innerHTML = `<tr><td colspan="6" class="empty">Nenhuma venda registrada. Adicione a primeira acima ☝️</td></tr>`;
+      return;
+    }
+
+    tbody.innerHTML = lista.map(v => {
+      const totalItem = v.quantidade * v.valor;
+      const id = v._index;
+      const produtoEscapado = String(v.produto).replace(/"/g, '&quot;');
+      return `
+        <tr>
+          <td><input type="date" value="${v.data}" onchange="editarCampo(${id}, 'data', this.value)"></td>
+          <td><input type="text" value="${produtoEscapado}" onchange="editarCampo(${id}, 'produto', this.value)"></td>
+          <td><input type="number" min="1" value="${v.quantidade}" onchange="editarCampo(${id}, 'quantidade', this.value)"></td>
+          <td><input type="number" min="0" step="0.01" value="${v.valor}" onchange="editarCampo(${id}, 'valor', this.value)"></td>
+          <td class="total-cell">${fmt(totalItem)}</td>
+          <td class="actions"><button class="btn-danger" onclick="excluir(${id})">🗑️</button></td>
+        </tr>`;
+    }).join('');
+  }
+
+  // ============================================
+  // EDIÇÃO INLINE
+  // ============================================
+  function editarCampo(index, campo, valor) {
+    if (campo === 'quantidade') valor = Math.max(1, parseInt(valor) || 1);
+    if (campo === 'valor') valor = Math.max(0, parseFloat(valor) || 0);
+    vendas[index][campo] = valor;
+    salvar();
+  }
+
+  // ============================================
+  // ADICIONAR
+  // ============================================
+  function adicionarVenda() {
+    const dataEl = document.getElementById('data');
+    const produtoEl = document.getElementById('produto');
+    const qtdEl = document.getElementById('quantidade');
+    const valorEl = document.getElementById('valor');
+
+    [dataEl, produtoEl, qtdEl, valorEl].forEach(el => el.classList.remove('erro'));
+
+    const erros = [];
+    if (!dataEl.value) { dataEl.classList.add('erro'); erros.push('Data'); }
+    if (!produtoEl.value.trim()) { produtoEl.classList.add('erro'); erros.push('Produto'); }
+    if (!qtdEl.value || parseInt(qtdEl.value) < 1) { qtdEl.classList.add('erro'); erros.push('Quantidade'); }
+    if (!valorEl.value || parseFloat(valorEl.value) < 0) { valorEl.classList.add('erro'); erros.push('Valor'); }
+
+    if (erros.length > 0) {
+      mostrarStatus('⚠️ Preencha corretamente: ' + erros.join(', '), 'erro');
+      return;
+    }
+
+    vendas.push({
+      data: dataEl.value,
+      produto: produtoEl.value.trim(),
+      quantidade: parseInt(qtdEl.value),
+      valor: parseFloat(valorEl.value)
+    });
+
+    produtoEl.value = '';
+    qtdEl.value = 1;
+    valorEl.value = '';
+    produtoEl.focus();
+
+    salvar();
+    mostrarStatus('✅ Venda adicionada!', 'ok');
+  }
+
+  // ============================================
+  // PROCESSAR
+  // ============================================
+  function processarCalculos() {
+    let total = 0;
+    vendas.forEach(v => total += (Number(v.quantidade) * Number(v.valor)));
+
+    document.getElementById('totalGeral').textContent = fmt(total);
+    document.getElementById('totalVendas').textContent = vendas.length;
+    document.getElementById('ticketMedio').textContent = vendas.length ? fmt(total / vendas.length) : fmt(0);
+
+    const hoje = new Date().toISOString().split('T')[0];
+    const totalHoje = vendas
+      .filter(v => v.data === hoje)
+      .reduce((s, v) => s + (Number(v.quantidade) * Number(v.valor)), 0);
+    document.getElementById('vendasHoje').textContent = fmt(totalHoje);
+
+    render();
+    mostrarStatus(`✅ Cálculos processados — ${vendas.length} venda(s) | Total: ${fmt(total)}`, 'ok');
+  }
+
+  // ============================================
+  // EXCLUIR
+  // ============================================
+  function excluir(i) {
+    if (confirm(`Excluir a venda "${vendas[i].produto}"?`)) {
+      vendas.splice(i, 1);
+      salvar();
+    }
+  }
+
+  // ============================================
+  // LIMPAR TUDO — CORRIGIDO
+  // ============================================
+  function limparTudo() {
+    if (vendas.length === 0) {
+      alert('ℹ️ Não há vendas para limpar.');
+      return;
+    }
+
+    const qtd = vendas.length;
+    const resp = confirm(
+      `⚠️ ATENÇÃO!\n\nVocê vai apagar ${qtd} venda(s).\n\n` +
+      `Deseja BAIXAR UM BACKUP antes de apagar?\n\n` +
+      `• OK = Baixar backup e depois apagar\n` +
+      `• Cancelar = Continuar sem backup`
+    );
+
+    if (resp) {
+      // Baixa backup primeiro
+      exportarJSON();
+      setTimeout(() => {
+        if (confirm(`Backup baixado. Agora confirme: apagar TODAS as ${qtd} vendas?`)) {
+          executarLimpeza();
+        }
+      }, 500);
+    } else {
+      if (confirm(`Tem certeza que deseja apagar TODAS as ${qtd} vendas SEM backup?`)) {
+        executarLimpeza();
+      }
+    }
+  }
+
+  function executarLimpeza() {
+    vendas = [];
+    localStorage.removeItem('ylmaVendas');
+    document.getElementById('totalGeral').textContent = fmt(0);
+    document.getElementById('totalVendas').textContent = '0';
+    document.getElementById('ticketMedio').textContent = fmt(0);
+    document.getElementById('vendasHoje').textContent = fmt(0);
+    atualizarFiltroMeses();
+    render();
+    mostrarStatus('🗑️ Todas as vendas foram apagadas.', 'ok');
+  }
+
+  // ============================================
+  // FILTROS
+  // ============================================
+  function atualizarFiltroMeses() {
+    const meses = [...new Set(vendas.map(v => v.data?.substring(0, 7)).filter(Boolean))].sort().reverse();
+    const select = document.getElementById('filtroMes');
+    const valorAtual = select.value;
+    select.innerHTML = '<option value="">Todos os meses</option>' +
+      meses.map(m => {
+        const [ano, mes] = m.split('-');
+        const nome = new Date(ano, mes - 1).toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
+        return `<option value="${m}">${nome}</option>`;
+      }).join('');
+    select.value = valorAtual;
+
+    atualizarPeriodoRelatorio();
+  }
+
+  function atualizarPeriodoRelatorio() {
+    const tipo = document.getElementById('tipoRelatorio').value;
+    const select = document.getElementById('periodoRelatorio');
+    const valorAtual = select.value;
+
+    let opcoes = [];
+    if (tipo === 'diario') {
+      const dias = [...new Set(vendas.map(v => v.data).filter(Boolean))].sort().reverse();
+      opcoes = dias.map(d => `<option value="${d}">${fmtDate(d)}</option>`);
+    } else {
+      const meses = [...new Set(vendas.map(v => v.data?.substring(0, 7)).filter(Boolean))].sort().reverse();
+      opcoes = meses.map(m => {
+        const [ano, mes] = m.split('-');
+        const nome = new Date(ano, mes - 1).toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
+        return `<option value="${m}">${nome}</option>`;
+      });
+    }
+
+    select.innerHTML = '<option value="">Todos os períodos</option>' + opcoes.join('');
+    if ([...select.options].some(o => o.value === valorAtual)) select.value = valorAtual;
+  }
+
+  // ============================================
+  // RELATÓRIOS
+  // ============================================
+  function gerarRelatorio() {
+    if (vendas.length === 0) {
+      alert('Nenhuma venda registrada ainda.');
+      return;
+    }
+
+    const tipo = document.getElementById('tipoRelatorio').value;
+    const periodo = document.getElementById('periodoRelatorio').value;
+
+    let filtradas = [...vendas];
+    if (tipo === 'diario' && periodo) {
+      filtradas = filtradas.filter(v => v.data === periodo);
+    } else if (tipo === 'mensal' && periodo) {
+      filtradas = filtradas.filter(v => v.data?.substring(0, 7) === periodo);
+    }
+
+    if (filtradas.length === 0) {
+      alert('Nenhuma venda encontrada para o período selecionado.');
+      return;
+    }
+
+    const html = tipo === 'diario'
+      ? montarRelatorioDiario(filtradas, periodo)
+      : montarRelatorioMensal(filtradas, periodo);
+
+    document.getElementById('conteudoRelatorio').innerHTML = html;
+    document.getElementById('tituloModal').textContent =
+      tipo === 'diario' ? '📅 Relatório Diário' : '📆 Relatório Mensal';
+    document.getElementById('modalRelatorio').classList.add('aberto');
+  }
+
+  function montarRelatorioDiario(lista, periodoFiltro) {
+    const grupos = {};
+    lista.forEach(v => {
+      if (!grupos[v.data]) grupos[v.data] = [];
+      grupos[v.data].push(v);
+    });
+
+    const datas = Object.keys(grupos).sort().reverse();
+    let totalGeral = 0;
+    let totalItens = 0;
+
+    const blocos = datas.map(data => {
+      const itens = grupos[data].sort((a, b) => a.produto.localeCompare(b.produto));
+      const subtotal = itens.reduce((s, v) => s + (v.quantidade * v.valor), 0);
+      totalGeral += subtotal;
+      totalItens += itens.length;
+
+      const linhas = itens.map(v => `
+        <tr>
+          <td>${v.produto}</td>
+          <td>${v.quantidade}</td>
+          <td>${fmt(v.valor)}</td>
+          <td>${fmt(v.quantidade * v.valor)}</td>
+        </tr>
+      `).join('');
+
+      return `
+        <div class="grupo">
+          <div class="grupo-titulo">
+            <span>📅 ${fmtDate(data)} (${itens.length} venda${itens.length > 1 ? 's' : ''})</span>
+            <span class="subtotal">Subtotal: ${fmt(subtotal)}</span>
+          </div>
+          <table>
+            <thead><tr><th>Produto</th><th>Qtd</th><th>Valor Unit.</th><th>Total</th></tr></thead>
+            <tbody>${linhas}</tbody>
+          </table>
+        </div>
+      `;
+    }).join('');
+
+    const titulo = periodoFiltro
+      ? `Relatório do dia ${fmtDate(periodoFiltro)}`
+      : `Relatório Diário — Todos os dias`;
+
+    return `
+      <div class="cabecalho">
+        <h1>🍰 Ylma Cake's</h1>
+        <p>Controle de Receitas do Carrinho</p>
+        <div class="titulo-rel">${titulo}</div>
+        <p style="margin-top:6px">Emitido em ${new Date().toLocaleString('pt-BR')}</p>
+      </div>
+      <div class="resumo">
+        <div class="resumo-item"><strong>Dias com venda</strong><span>${datas.length}</span></div>
+        <div class="resumo-item"><strong>Total de vendas</strong><span>${totalItens}</span></div>
+        <div class="resumo-item"><strong>Ticket médio/dia</strong><span>${fmt(totalGeral / datas.length)}</span></div>
+        <div class="resumo-item"><strong>Receita total</strong><span>${fmt(totalGeral)}</span></div>
+      </div>
+      ${blocos}
+      <div class="total-final">💰 Receita Total do Período: ${fmt(totalGeral)}</div>
+    `;
+  }
+
+  function montarRelatorioMensal(lista, periodoFiltro) {
+    const grupos = {};
+    lista.forEach(v => {
+      const mes = v.data?.substring(0, 7);
+      if (!mes) return;
+      if (!grupos[mes]) grupos[mes] = [];
+      grupos[mes].push(v);
+    });
+
+    const meses = Object.keys(grupos).sort().reverse();
+    let totalGeral = 0;
+
+    const blocos = meses.map(mes => {
+      const itens = grupos[mes].sort((a, b) => new Date(a.data) - new Date(b.data));
+      const [ano, m] = mes.split('-');
+      const nomeMes = new Date(ano, m - 1).toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
+
+      const subtotal = itens.reduce((s, v) => s + (v.quantidade * v.valor), 0);
+      const ticketMedio = subtotal / itens.length;
+      const diasComVenda = new Set(itens.map(v => v.data)).size;
+      const mediaDiaria = subtotal / diasComVenda;
+      totalGeral += subtotal;
+
+      const porProduto = {};
+      itens.forEach(v => {
+        const p = v.produto;
+        if (!porProduto[p]) porProduto[p] = { qtd: 0, total: 0 };
+        porProduto[p].qtd += v.quantidade;
+        porProduto[p].total += v.quantidade * v.valor;
+      });
+      const topProdutos = Object.entries(porProduto)
+        .sort((a, b) => b[1].total - a[1].total)
+        .slice(0, 5);
+
+      const linhas = itens.map(v => `
+        <tr>
+          <td>${fmtDate(v.data)}</td>
+          <td>${v.produto}</td>
+          <td>${v.quantidade}</td>
+          <td>${fmt(v.valor)}</td>
+          <td>${fmt(v.quantidade * v.valor)}</td>
+        </tr>
+      `).join('');
+
+      const topLinhas = topProdutos.map(([nome, info]) => `
+        <tr>
+          <td>${nome}</td>
+          <td>${info.qtd}</td>
+          <td>${fmt(info.total)}</td>
+        </tr>
+      `).join('');
+
+      return `
+        <div class="grupo">
+          <div class="grupo-titulo">
+            <span>📆 ${nomeMes} — ${itens.length} venda${itens.length > 1 ? 's' : ''}</span>
+            <span class="subtotal">Total: ${fmt(subtotal)}</span>
+          </div>
+
+          <div class="resumo" style="margin-bottom:12px">
+            <div class="resumo-item"><strong>Vendas</strong><span>${itens.length}</span></div>
+            <div class="resumo-item"><strong>Dias com venda</strong><span>${diasComVenda}</span></div>
+            <div class="resumo-item"><strong>Ticket médio</strong><span>${fmt(ticketMedio)}</span></div>
+            <div class="resumo-item"><strong>Média diária</strong><span>${fmt(mediaDiaria)}</span></div>
+          </div>
+
+          <table>
+            <thead><tr><th>Data</th><th>Produto</th><th>Qtd</th><th>Valor Unit.</th><th>Total</th></tr></thead>
+            <tbody>${linhas}</tbody>
+          </table>
+
+          <div style="margin-top:12px">
+            <strong style="color:#b85c5c; font-size:13px">🏆 Top 5 produtos do mês (por receita):</strong>
+            <table style="margin-top:6px">
+              <thead><tr><th>Produto</th><th>Qtd</th><th>Receita</th></tr></thead>
+              <tbody>${topLinhas}</tbody>
+            </table>
+          </div>
+        </div>
+      `;
+    }).join('');
+
+    const titulo = periodoFiltro
+      ? `Relatório Mensal — ${(() => {
+          const [ano, m] = periodoFiltro.split('-');
+          return new Date(ano, m - 1).toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
+        })()}`
+      : `Relatório Mensal — Todos os meses`;
+
+    return `
+      <div class="cabecalho">
+        <h1>🍰 Ylma Cake's</h1>
+        <p>Controle de Receitas do Carrinho</p>
+        <div class="titulo-rel">${titulo}</div>
+        <p style="margin-top:6px">Emitido em ${new Date().toLocaleString('pt-BR')}</p>
+      </div>
+      <div class="resumo">
+        <div class="resumo-item"><strong>Meses analisados</strong><span>${meses.length}</span></div>
+        <div class="resumo-item"><strong>Total de vendas</strong><span>${lista.length}</span></div>
+        <div class="resumo-item"><strong>Receita total</strong><span>${fmt(totalGeral)}</span></div>
+      </div>
+      ${blocos}
+      <div class="total-final">💰 Receita Total do Período: ${fmt(totalGeral)}</div>
+    `;
+  }
+
+  // ============================================
+  // MODAL
+  // ============================================
+  function fecharModal() {
+    document.getElementById('modalRelatorio').classList.remove('aberto');
+  }
+
+  function imprimirRelatorio() {
+    window.print();
+  }
+
+  document.getElementById('modalRelatorio').addEventListener('click', e => {
+    if (e.target.id === 'modalRelatorio') fecharModal();
+  });
+
+  // ============================================
+  // EXPORTAR / IMPORTAR
+  // ============================================
+  function exportarJSON() {
+    const blob = new Blob([JSON.stringify(vendas, null, 2)], { type: 'application/json' });
+    baixar(blob, `ylma-cakes-backup-${new Date().toISOString().split('T')[0]}.json`);
+    mostrarStatus('📥 Backup JSON gerado.', 'ok');
+  }
+
+  function exportarCSV() {
+    const linhas = [['Data', 'Produto', 'Quantidade', 'Valor Unitário', 'Total']];
+    vendas.forEach(v => linhas.push([v.data, v.produto, v.quantidade, v.valor, (v.quantidade * v.valor).toFixed(2)]));
+    const csv = linhas.map(l => l.map(c => `"${c}"`).join(';')).join('\n');
+    const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8' });
+    baixar(blob, `ylma-cakes-${new Date().toISOString().split('T')[0]}.csv`);
+    mostrarStatus('📊 CSV exportado.', 'ok');
+  }
+
+  function baixar(blob, nome) {
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = nome; a.click();
+    URL.revokeObjectURL(url);
+  }
+
+  // ============================================
+  // STATUS
+  // ============================================
+  let statusTimeout;
+  function mostrarStatus(msg, tipo) {
+    const el = document.getElementById('status');
+    el.textContent = msg;
+    el.className = 'status ' + tipo;
+    clearTimeout(statusTimeout);
+    statusTimeout = setTimeout(() => { el.className = 'status'; }, 5000);
+  }
+
+  // ============================================
+  // EVENTOS
+  // ============================================
+  document.getElementById('btnAdicionar').addEventListener('click', adicionarVenda);
+  document.getElementById('btnProcessar').addEventListener('click', processarCalculos);
+  document.getElementById('btnBackup').addEventListener('click', exportarJSON);
+  document.getElementById('btnCSV').addEventListener('click', exportarCSV);
+  document.getElementById('btnLimpar').addEventListener('click', limparTudo);
+  document.getElementById('btnImportar').addEventListener('click', () => document.getElementById('importFile').click());
+  document.getElementById('btnGerarRelatorio').addEventListener('click', gerarRelatorio);
+
+  document.getElementById('busca').addEventListener('input', render);
+  document.getElementById('filtroMes').addEventListener('change', render);
+  document.getElementById('tipoRelatorio').addEventListener('change', atualizarPeriodoRelatorio);
+
+  ['produto', 'quantidade', 'valor'].forEach(id => {
+    document.getElementById(id).addEventListener('keypress', e => {
+      if (e.key === 'Enter') { e.preventDefault(); adicionarVenda(); }
+    });
+  });
+
+  document.getElementById('importFile').addEventListener('change', e => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = ev => {
+      try {
+        const dados = JSON.parse(ev.target.result);
+        if (!Array.isArray(dados)) throw new Error('Formato inválido');
+        if (confirm(`Importar ${dados.length} venda(s)? Isso substituirá os dados atuais.`)) {
+          vendas = dados;
+          salvar();
+          processarCalculos();
+        }
+      } catch (err) {
+        alert('❌ Arquivo inválido: ' + err.message);
+      }
+    };
+    reader.readAsText(file);
+    e.target.value = '';
+  });
+
+  // ============================================
+  // INIT
+  // ============================================
+  document.getElementById('data').value = new Date().toISOString().split('T')[0];
+  atualizarFiltroMeses();
+  render();
+  if (vendas.length > 0) processarCalculos();
+</script>
+</body>
+</html>
